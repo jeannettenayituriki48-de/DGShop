@@ -54,7 +54,7 @@ Fill in the following fields:
 | **Region** | `Oregon (US West)` or `Frankfurt (EU Central)` |
 | **Root Directory** | Leave **EMPTY** (blank) or `./` |
 | **Build Command** | `npm install --legacy-peer-deps && npm run build` |
-| **Start Command** | `npm run serve` |
+| **Start Command** | `node server.js` |
 | **Instance Type** | **Free** ($0/month) |
 
 ---
