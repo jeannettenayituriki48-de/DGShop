@@ -5,6 +5,7 @@ import { Controller, useForm } from 'react-hook-form';
 import {
   ActivityIndicator,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -53,7 +54,7 @@ export default function LoginScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
       <View style={styles.card}>
         <Text style={styles.badge}>Rwamagana, Rwanda</Text>
         <Text style={styles.title}>D&G E-Commerce</Text>
@@ -126,13 +127,13 @@ export default function LoginScreen() {
           </Pressable>
         </View>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
     padding: 20,
     backgroundColor: '#f4f6f8',
@@ -146,6 +147,9 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowRadius: 8,
     elevation: 3,
+    maxWidth: 480,
+    width: '100%',
+    alignSelf: 'center',
   },
   badge: {
     alignSelf: 'center',
