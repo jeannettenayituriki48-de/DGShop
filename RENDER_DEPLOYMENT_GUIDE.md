@@ -52,6 +52,7 @@ Fill in the following fields:
 | **Language** | **Node** |
 | **Branch** | `main` |
 | **Region** | `Oregon (US West)` or `Frankfurt (EU Central)` |
+| **Root Directory** | Leave **EMPTY** (blank) or `./` |
 | **Build Command** | `npm install && npm run build` |
 | **Start Command** | `npm run serve` |
 | **Instance Type** | **Free** ($0/month) |
