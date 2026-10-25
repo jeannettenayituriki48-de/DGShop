@@ -9,6 +9,11 @@
  */
 import { sql } from '../../db/index';
 import { requireAuthUser } from '../../server/auth';
+import { jsonResponse, handleCorsOptions } from '../../server/cors';
+
+export async function OPTIONS(): Promise<Response> {
+  return handleCorsOptions();
+}
 
 export async function GET(request: Request): Promise<Response> {
   try {
@@ -27,9 +32,9 @@ export async function GET(request: Request): Promise<Response> {
         LIMIT 1
       `;
       if (rows.length === 0) {
-        return Response.json({ message: 'Product not found' }, { status: 404 });
+        return jsonResponse({ message: 'Product not found' }, { status: 404 });
       }
-      return Response.json(rows[0]);
+      return jsonResponse(rows[0]);
     }
 
     // Dynamic filtering query
@@ -51,10 +56,10 @@ export async function GET(request: Request): Promise<Response> {
       ORDER BY id ASC
     `;
 
-    return Response.json(rows);
+    return jsonResponse(rows);
   } catch (err) {
     console.error('[GET /api/products]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -63,7 +68,7 @@ export async function POST(request: Request): Promise<Response> {
   if (user instanceof Response) return user;
 
   if (user.role !== 'seller') {
-    return Response.json({ message: 'Forbidden: Seller role required' }, { status: 403 });
+    return jsonResponse({ message: 'Forbidden: Seller role required' }, { status: 403 });
   }
 
   try {
@@ -78,7 +83,7 @@ export async function POST(request: Request): Promise<Response> {
       };
 
     if (!name || name.trim() === '' || price === undefined || price < 0) {
-      return Response.json(
+      return jsonResponse(
         { message: 'Valid product name and price are required' },
         { status: 400 }
       );
@@ -97,10 +102,10 @@ export async function POST(request: Request): Promise<Response> {
       RETURNING id, name, description, price, image_url, category, stock, created_at
     `;
 
-    return Response.json(rows[0], { status: 201 });
+    return jsonResponse(rows[0], { status: 201 });
   } catch (err) {
     console.error('[POST /api/products]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -109,7 +114,7 @@ export async function PUT(request: Request): Promise<Response> {
   if (user instanceof Response) return user;
 
   if (user.role !== 'seller') {
-    return Response.json({ message: 'Forbidden: Seller role required' }, { status: 403 });
+    return jsonResponse({ message: 'Forbidden: Seller role required' }, { status: 403 });
   }
 
   try {
@@ -125,13 +130,13 @@ export async function PUT(request: Request): Promise<Response> {
 
     const id = body.id;
     if (!id) {
-      return Response.json({ message: 'Product ID is required' }, { status: 400 });
+      return jsonResponse({ message: 'Product ID is required' }, { status: 400 });
     }
 
     // Check existing
     const existing = await sql`SELECT id FROM products WHERE id = ${Number(id)} LIMIT 1`;
     if (existing.length === 0) {
-      return Response.json({ message: 'Product not found' }, { status: 404 });
+      return jsonResponse({ message: 'Product not found' }, { status: 404 });
     }
 
     const rows = await sql`
@@ -147,10 +152,10 @@ export async function PUT(request: Request): Promise<Response> {
       RETURNING id, name, description, price, image_url, category, stock, created_at
     `;
 
-    return Response.json(rows[0]);
+    return jsonResponse(rows[0]);
   } catch (err) {
     console.error('[PUT /api/products]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -159,7 +164,7 @@ export async function DELETE(request: Request): Promise<Response> {
   if (user instanceof Response) return user;
 
   if (user.role !== 'seller') {
-    return Response.json({ message: 'Forbidden: Seller role required' }, { status: 403 });
+    return jsonResponse({ message: 'Forbidden: Seller role required' }, { status: 403 });
   }
 
   try {
@@ -172,7 +177,7 @@ export async function DELETE(request: Request): Promise<Response> {
     }
 
     if (!id) {
-      return Response.json({ message: 'Product ID is required' }, { status: 400 });
+      return jsonResponse({ message: 'Product ID is required' }, { status: 400 });
     }
 
     const productId = Number(id);
@@ -186,7 +191,7 @@ export async function DELETE(request: Request): Promise<Response> {
     if (count > 0) {
       // Safely zero-out inventory instead of breaking foreign keys
       await sql`UPDATE products SET stock = 0 WHERE id = ${productId}`;
-      return Response.json({
+      return jsonResponse({
         success: true,
         archived: true,
         message: 'Product is linked to customer orders. Inventory stock was set to 0 (out of stock).',
@@ -197,9 +202,9 @@ export async function DELETE(request: Request): Promise<Response> {
     await sql`DELETE FROM cart_items WHERE product_id = ${productId}`;
     await sql`DELETE FROM products WHERE id = ${productId}`;
 
-    return Response.json({ success: true, message: 'Product deleted successfully' });
+    return jsonResponse({ success: true, message: 'Product deleted successfully' });
   } catch (err) {
     console.error('[DELETE /api/products]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }

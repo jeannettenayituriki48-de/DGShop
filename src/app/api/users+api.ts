@@ -7,12 +7,17 @@
  */
 import { sql } from '../../db/index';
 import { requireAuthUser } from '../../server/auth';
+import { jsonResponse, handleCorsOptions } from '../../server/cors';
+
+export async function OPTIONS(): Promise<Response> {
+  return handleCorsOptions();
+}
 
 export async function GET(request: Request): Promise<Response> {
   const user = requireAuthUser(request);
   if (user instanceof Response) return user;
   if (user.role !== 'seller') {
-    return Response.json({ message: 'Forbidden: Seller role required' }, { status: 403 });
+    return jsonResponse({ message: 'Forbidden: Seller role required' }, { status: 403 });
   }
 
   try {
@@ -29,10 +34,10 @@ export async function GET(request: Request): Promise<Response> {
       GROUP BY u.id, u.name, u.email, u.role, u.created_at
       ORDER BY u.created_at DESC
     `;
-    return Response.json(rows);
+    return jsonResponse(rows);
   } catch (err) {
     console.error('[GET /api/users]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -40,18 +45,18 @@ export async function DELETE(request: Request): Promise<Response> {
   const user = requireAuthUser(request);
   if (user instanceof Response) return user;
   if (user.role !== 'seller') {
-    return Response.json({ message: 'Forbidden: Seller role required' }, { status: 403 });
+    return jsonResponse({ message: 'Forbidden: Seller role required' }, { status: 403 });
   }
 
   try {
     const url = new URL(request.url);
     const id = url.searchParams.get('id');
     if (!id) {
-      return Response.json({ message: 'User ID is required' }, { status: 400 });
+      return jsonResponse({ message: 'User ID is required' }, { status: 400 });
     }
     const targetId = Number(id);
     if (targetId === user.id) {
-      return Response.json({ message: 'Cannot delete your own account' }, { status: 400 });
+      return jsonResponse({ message: 'Cannot delete your own account' }, { status: 400 });
     }
 
     await sql`DELETE FROM orders WHERE customer_id = ${targetId}`;
@@ -59,9 +64,9 @@ export async function DELETE(request: Request): Promise<Response> {
     await sql`DELETE FROM carts WHERE customer_id = ${targetId}`;
     await sql`DELETE FROM users WHERE id = ${targetId}`;
 
-    return Response.json({ success: true });
+    return jsonResponse({ success: true });
   } catch (err) {
     console.error('[DELETE /api/users]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }

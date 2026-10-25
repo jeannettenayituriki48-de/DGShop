@@ -6,15 +6,23 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { sql } from '../../../db/index';
+import { jsonResponse, handleCorsOptions } from '../../../server/cors';
 
 const JWT_SECRET = process.env.JWT_SECRET ?? 'fallback-secret-do-not-use-in-prod';
 
+export async function OPTIONS(): Promise<Response> {
+  return handleCorsOptions();
+}
+
 export async function POST(request: Request): Promise<Response> {
   try {
-    const { email, password } = await request.json() as { email?: string; password?: string };
+    const { email, password } = (await request.json().catch(() => ({}))) as {
+      email?: string;
+      password?: string;
+    };
 
     if (!email || !password) {
-      return Response.json({ message: 'Email and password are required' }, { status: 400 });
+      return jsonResponse({ message: 'Email and password are required' }, { status: 400 });
     }
 
     const rows = await sql`
@@ -24,15 +32,17 @@ export async function POST(request: Request): Promise<Response> {
       LIMIT 1
     `;
 
-    const user = rows[0] as { id: number; name: string; email: string; role: string; password_hash: string } | undefined;
+    const user = rows[0] as
+      | { id: number; name: string; email: string; role: string; password_hash: string }
+      | undefined;
 
     if (!user) {
-      return Response.json({ message: 'Invalid email or password' }, { status: 401 });
+      return jsonResponse({ message: 'Invalid email or password' }, { status: 401 });
     }
 
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) {
-      return Response.json({ message: 'Invalid email or password' }, { status: 401 });
+      return jsonResponse({ message: 'Invalid email or password' }, { status: 401 });
     }
 
     const token = jwt.sign(
@@ -43,9 +53,9 @@ export async function POST(request: Request): Promise<Response> {
 
     const { password_hash: _ph, ...publicUser } = user;
 
-    return Response.json({ token, user: publicUser });
+    return jsonResponse({ token, user: publicUser });
   } catch (err) {
     console.error('[POST /api/auth/login]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }

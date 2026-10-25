@@ -5,6 +5,11 @@
  */
 import { sql } from '../../db/index';
 import { requireAuthUser } from '../../server/auth';
+import { jsonResponse, handleCorsOptions } from '../../server/cors';
+
+export async function OPTIONS(): Promise<Response> {
+  return handleCorsOptions();
+}
 
 export async function GET(request: Request): Promise<Response> {
   const user = requireAuthUser(request);
@@ -39,9 +44,9 @@ export async function GET(request: Request): Promise<Response> {
         GROUP BY o.id, u.name, u.email
       `;
       if (orders.length === 0) {
-        return Response.json({ message: 'Order not found' }, { status: 404 });
+        return jsonResponse({ message: 'Order not found' }, { status: 404 });
       }
-      return Response.json(orders[0]);
+      return jsonResponse(orders[0]);
     }
 
     const orders = await sql`
@@ -66,10 +71,10 @@ export async function GET(request: Request): Promise<Response> {
       GROUP BY o.id, u.name, u.email
       ORDER BY o.created_at DESC
     `;
-    return Response.json(orders);
+    return jsonResponse(orders);
   } catch (err) {
     console.error('[GET /api/orders]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -98,7 +103,7 @@ export async function POST(request: Request): Promise<Response> {
     `) as { product_id: number; quantity: number; price: string; stock: number }[];
 
     if (cartItems.length === 0) {
-      return Response.json({ message: 'Cart is empty' }, { status: 400 });
+      return jsonResponse({ message: 'Cart is empty' }, { status: 400 });
     }
 
     const total = cartItems.reduce(
@@ -130,10 +135,10 @@ export async function POST(request: Request): Promise<Response> {
     // Clear cart
     await sql`DELETE FROM cart_items WHERE user_id = ${userId}`;
 
-    return Response.json({ orderId: newOrder.id, total }, { status: 201 });
+    return jsonResponse({ orderId: newOrder.id, total }, { status: 201 });
   } catch (err) {
     console.error('[POST /api/orders]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -142,7 +147,7 @@ export async function PATCH(request: Request): Promise<Response> {
   if (user instanceof Response) return user;
 
   if (user.role !== 'seller') {
-    return Response.json({ message: 'Forbidden: Seller role required' }, { status: 403 });
+    return jsonResponse({ message: 'Forbidden: Seller role required' }, { status: 403 });
   }
 
   try {
@@ -152,12 +157,12 @@ export async function PATCH(request: Request): Promise<Response> {
     };
 
     if (!id || !status) {
-      return Response.json({ message: 'Order ID and status are required' }, { status: 400 });
+      return jsonResponse({ message: 'Order ID and status are required' }, { status: 400 });
     }
 
     const validStatuses = ['pending', 'processing', 'shipped', 'delivered', 'cancelled'];
     if (!validStatuses.includes(status)) {
-      return Response.json({ message: 'Invalid status value' }, { status: 400 });
+      return jsonResponse({ message: 'Invalid status value' }, { status: 400 });
     }
 
     // If changing to cancelled, restore stock
@@ -183,12 +188,12 @@ export async function PATCH(request: Request): Promise<Response> {
     `;
 
     if (updated.length === 0) {
-      return Response.json({ message: 'Order not found' }, { status: 404 });
+      return jsonResponse({ message: 'Order not found' }, { status: 404 });
     }
 
-    return Response.json(updated[0]);
+    return jsonResponse(updated[0]);
   } catch (err) {
     console.error('[PATCH /api/orders]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }

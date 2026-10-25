@@ -4,13 +4,18 @@
  * Returns: { message: string }
  */
 import { sql } from '../../../db/index';
+import { jsonResponse, handleCorsOptions } from '../../../server/cors';
+
+export async function OPTIONS(): Promise<Response> {
+  return handleCorsOptions();
+}
 
 export async function POST(request: Request): Promise<Response> {
   try {
-    const { email } = await request.json() as { email?: string };
+    const { email } = (await request.json().catch(() => ({}))) as { email?: string };
 
     if (!email) {
-      return Response.json({ message: 'Email is required' }, { status: 400 });
+      return jsonResponse({ message: 'Email is required' }, { status: 400 });
     }
 
     // Check if user exists (fail silently to prevent email enumeration)
@@ -18,17 +23,17 @@ export async function POST(request: Request): Promise<Response> {
 
     if (existing.length === 0) {
       // Return success message anyway for security
-      return Response.json({
+      return jsonResponse({
         message: 'If an account with that email exists, reset instructions have been sent.',
       });
     }
 
     // In a production backend, a reset token would be emailed here.
-    return Response.json({
+    return jsonResponse({
       message: 'Password reset link and instructions have been sent to your email.',
     });
   } catch (err) {
     console.error('[POST /api/auth/forgot-password]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }

@@ -6,6 +6,11 @@
 import bcrypt from 'bcryptjs';
 import { sql } from '../../../db/index';
 import { requireAuthUser } from '../../../server/auth';
+import { jsonResponse, handleCorsOptions } from '../../../server/cors';
+
+export async function OPTIONS(): Promise<Response> {
+  return handleCorsOptions();
+}
 
 export async function PUT(request: Request): Promise<Response> {
   const user = requireAuthUser(request);
@@ -21,31 +26,37 @@ export async function PUT(request: Request): Promise<Response> {
     const { name, currentPassword, newPassword } = body;
 
     if (!name && !newPassword) {
-      return Response.json({ message: 'Nothing to update' }, { status: 400 });
+      return jsonResponse({ message: 'Nothing to update' }, { status: 400 });
     }
 
     // Validate name
     if (name !== undefined && name.trim().length < 2) {
-      return Response.json({ message: 'Name must be at least 2 characters' }, { status: 400 });
+      return jsonResponse({ message: 'Name must be at least 2 characters' }, { status: 400 });
     }
 
     // If changing password, verify current password first
     if (newPassword !== undefined) {
       if (!currentPassword) {
-        return Response.json({ message: 'Current password is required to set a new one' }, { status: 400 });
+        return jsonResponse(
+          { message: 'Current password is required to set a new one' },
+          { status: 400 }
+        );
       }
       if (newPassword.length < 8) {
-        return Response.json({ message: 'New password must be at least 8 characters' }, { status: 400 });
+        return jsonResponse(
+          { message: 'New password must be at least 8 characters' },
+          { status: 400 }
+        );
       }
 
       const rows = await sql`SELECT password_hash FROM users WHERE id = ${user.id}`;
       if (rows.length === 0) {
-        return Response.json({ message: 'User not found' }, { status: 404 });
+        return jsonResponse({ message: 'User not found' }, { status: 404 });
       }
       const hash = rows[0].password_hash as string;
       const valid = await bcrypt.compare(currentPassword, hash);
       if (!valid) {
-        return Response.json({ message: 'Current password is incorrect' }, { status: 401 });
+        return jsonResponse({ message: 'Current password is incorrect' }, { status: 401 });
       }
     }
 
@@ -61,9 +72,9 @@ export async function PUT(request: Request): Promise<Response> {
     }
 
     const updated = await sql`SELECT id, name, email, role FROM users WHERE id = ${user.id}`;
-    return Response.json({ user: updated[0] });
+    return jsonResponse({ user: updated[0] });
   } catch (err) {
     console.error('[PUT /api/auth/profile]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }

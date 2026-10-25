@@ -5,6 +5,7 @@
  *   if (userId instanceof Response) return userId;
  */
 import jwt from 'jsonwebtoken';
+import { jsonResponse } from './cors';
 
 const JWT_SECRET = process.env.JWT_SECRET ?? 'fallback-secret-do-not-use-in-prod';
 
@@ -19,14 +20,14 @@ export function requireAuth(request: Request): number | Response {
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
   if (!token) {
-    return Response.json({ message: 'Unauthorized' }, { status: 401 });
+    return jsonResponse({ message: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const payload = jwt.verify(token, JWT_SECRET) as unknown as { sub: number };
     return payload.sub;
   } catch {
-    return Response.json({ message: 'Invalid or expired token' }, { status: 401 });
+    return jsonResponse({ message: 'Invalid or expired token' }, { status: 401 });
   }
 }
 
@@ -35,7 +36,7 @@ export function requireAuthUser(request: Request): AuthUser | Response {
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
 
   if (!token) {
-    return Response.json({ message: 'Unauthorized' }, { status: 401 });
+    return jsonResponse({ message: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -46,6 +47,6 @@ export function requireAuthUser(request: Request): AuthUser | Response {
     };
     return { id: payload.sub, email: payload.email, role: payload.role };
   } catch {
-    return Response.json({ message: 'Invalid or expired token' }, { status: 401 });
+    return jsonResponse({ message: 'Invalid or expired token' }, { status: 401 });
   }
 }

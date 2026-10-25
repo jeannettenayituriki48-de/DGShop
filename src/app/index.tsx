@@ -17,8 +17,7 @@ import { LoadingView } from '../components/LoadingView';
 import { Product } from '../api/products.api';
 import { useAuthStore } from '../store/authStore';
 
-// Base URL reused from the env var (same as axios client)
-const BASE_URL = (process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8081') + '/api';
+import { BASE_URL } from '../api/client';
 
 /**
  * Fetch products without going through the axios interceptor that

@@ -6,6 +6,11 @@
  */
 import { sql } from '../../db/index';
 import { requireAuth } from '../../server/auth';
+import { jsonResponse, handleCorsOptions } from '../../server/cors';
+
+export async function OPTIONS(): Promise<Response> {
+  return handleCorsOptions();
+}
 
 export async function GET(request: Request): Promise<Response> {
   const userId = requireAuth(request);
@@ -20,10 +25,10 @@ export async function GET(request: Request): Promise<Response> {
       WHERE ci.user_id = ${userId}
       ORDER BY ci.created_at ASC
     `;
-    return Response.json(rows);
+    return jsonResponse(rows);
   } catch (err) {
     console.error('[GET /api/cart]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -32,13 +37,13 @@ export async function POST(request: Request): Promise<Response> {
   if (userId instanceof Response) return userId;
 
   try {
-    const { productId, quantity = 1 } = await request.json() as {
+    const { productId, quantity = 1 } = (await request.json().catch(() => ({}))) as {
       productId?: number;
       quantity?: number;
     };
 
     if (!productId) {
-      return Response.json({ message: 'productId is required' }, { status: 400 });
+      return jsonResponse({ message: 'productId is required' }, { status: 400 });
     }
 
     await sql`
@@ -48,10 +53,10 @@ export async function POST(request: Request): Promise<Response> {
       DO UPDATE SET quantity = cart_items.quantity + EXCLUDED.quantity
     `;
 
-    return Response.json({ ok: true }, { status: 201 });
+    return jsonResponse({ ok: true }, { status: 201 });
   } catch (err) {
     console.error('[POST /api/cart]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -60,10 +65,13 @@ export async function PATCH(request: Request): Promise<Response> {
   if (userId instanceof Response) return userId;
 
   try {
-    const { id, quantity } = await request.json() as { id?: number; quantity?: number };
+    const { id, quantity } = (await request.json().catch(() => ({}))) as {
+      id?: number;
+      quantity?: number;
+    };
 
     if (!id || quantity === undefined) {
-      return Response.json({ message: 'Cart item id and quantity are required' }, { status: 400 });
+      return jsonResponse({ message: 'Cart item id and quantity are required' }, { status: 400 });
     }
 
     if (quantity <= 0) {
@@ -76,10 +84,10 @@ export async function PATCH(request: Request): Promise<Response> {
       `;
     }
 
-    return Response.json({ ok: true });
+    return jsonResponse({ ok: true });
   } catch (err) {
     console.error('[PATCH /api/cart]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }
 
@@ -100,9 +108,9 @@ export async function DELETE(request: Request): Promise<Response> {
       await sql`DELETE FROM cart_items WHERE user_id = ${userId}`;
     }
 
-    return Response.json({ ok: true });
+    return jsonResponse({ ok: true });
   } catch (err) {
     console.error('[DELETE /api/cart]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }

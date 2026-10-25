@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
@@ -8,8 +9,20 @@ import * as SecureStore from 'expo-secure-store';
  *   Web / iOS Simulator : http://localhost:8081
  *   Android Emulator    : http://10.0.2.2:8081
  *   Physical device     : http://<machine-local-ip>:8081
+ *   Production (Render) : https://dgshop-backend.onrender.com
  */
-const BASE_URL = (process.env.EXPO_PUBLIC_API_BASE_URL ?? 'http://localhost:8081') + '/api';
+export function getBaseApiUrl(): string {
+  const envUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
+  if (envUrl) {
+    return envUrl.replace(/\/+$/, '') + '/api';
+  }
+  if (Platform.OS === 'android') {
+    return 'http://10.0.2.2:8081/api';
+  }
+  return 'http://localhost:8081/api';
+}
+
+export const BASE_URL = getBaseApiUrl();
 
 // eslint-disable-next-line import/no-named-as-default-member
 export const api = axios.create({

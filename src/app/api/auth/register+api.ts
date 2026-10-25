@@ -6,12 +6,17 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { sql } from '../../../db/index';
+import { jsonResponse, handleCorsOptions } from '../../../server/cors';
 
 const JWT_SECRET = process.env.JWT_SECRET ?? 'fallback-secret-do-not-use-in-prod';
 
+export async function OPTIONS(): Promise<Response> {
+  return handleCorsOptions();
+}
+
 export async function POST(request: Request): Promise<Response> {
   try {
-    const { name, email, password, role } = await request.json() as {
+    const { name, email, password, role } = (await request.json().catch(() => ({}))) as {
       name?: string;
       email?: string;
       password?: string;
@@ -19,18 +24,18 @@ export async function POST(request: Request): Promise<Response> {
     };
 
     if (!name || !email || !password) {
-      return Response.json({ message: 'Name, email and password are required' }, { status: 400 });
+      return jsonResponse({ message: 'Name, email and password are required' }, { status: 400 });
     }
 
     if (password.length < 8) {
-      return Response.json({ message: 'Password must be at least 8 characters' }, { status: 400 });
+      return jsonResponse({ message: 'Password must be at least 8 characters' }, { status: 400 });
     }
 
     const assignedRole = role === 'seller' ? 'seller' : 'customer';
 
     const existing = await sql`SELECT id FROM users WHERE email = ${email} LIMIT 1`;
     if (existing.length > 0) {
-      return Response.json({ message: 'Email already in use' }, { status: 409 });
+      return jsonResponse({ message: 'Email already in use' }, { status: 409 });
     }
 
     const password_hash = await bcrypt.hash(password, 12);
@@ -48,9 +53,9 @@ export async function POST(request: Request): Promise<Response> {
       { expiresIn: '7d' }
     );
 
-    return Response.json({ token, user }, { status: 201 });
+    return jsonResponse({ token, user }, { status: 201 });
   } catch (err) {
     console.error('[POST /api/auth/register]', err);
-    return Response.json({ message: 'Internal server error' }, { status: 500 });
+    return jsonResponse({ message: 'Internal server error' }, { status: 500 });
   }
 }
