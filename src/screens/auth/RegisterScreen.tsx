@@ -55,11 +55,16 @@ export default function RegisterScreen() {
       setApiError('');
       await register(data.name, data.email, data.password, selectedRole);
     } catch (err: unknown) {
+      console.error('[RegisterScreen] Registration error:', err);
       const error = err as { message?: string; response?: { data?: { message?: string } } };
       if (error.message === 'NO_INTERNET') {
         setApiError('No internet connection. Please check your network.');
+      } else if (error.response?.data?.message) {
+        setApiError(error.response.data.message);
+      } else if (error.message) {
+        setApiError(error.message);
       } else {
-        setApiError(error.response?.data?.message || 'Registration failed. Please try again.');
+        setApiError('Registration failed. Please try again.');
       }
     }
   };

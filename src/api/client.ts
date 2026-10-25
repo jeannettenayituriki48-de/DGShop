@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import NetInfo from '@react-native-community/netinfo';
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import { storage } from '../utils/storage';
 
 /**
  * Base URL for all API calls.
@@ -31,9 +31,14 @@ export const api = axios.create({
 });
 
 api.interceptors.request.use(async (config) => {
-  const net = await NetInfo.fetch();
-  if (!net.isConnected) throw new Error('NO_INTERNET');
-  const token = await SecureStore.getItemAsync('token');
+  if (Platform.OS !== 'web') {
+    const net = await NetInfo.fetch();
+    if (!net.isConnected) throw new Error('NO_INTERNET');
+  } else if (typeof navigator !== 'undefined' && 'onLine' in navigator && !navigator.onLine) {
+    throw new Error('NO_INTERNET');
+  }
+
+  const token = await storage.getItemAsync('token');
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -42,8 +47,8 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     if (error.response?.status === 401) {
-      await SecureStore.deleteItemAsync('token');
-      await SecureStore.deleteItemAsync('user');
+      await storage.deleteItemAsync('token');
+      await storage.deleteItemAsync('user');
     }
     return Promise.reject(error);
   }

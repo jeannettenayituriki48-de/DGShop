@@ -1,6 +1,6 @@
-import * as SecureStore from 'expo-secure-store';
 import { create } from 'zustand';
 import { authApi, User, UserRole } from '../api/auth.api';
+import { storage } from '../utils/storage';
 
 type AuthState = {
   user: User | null;
@@ -12,7 +12,7 @@ type AuthState = {
   forgotPassword: (email: string) => Promise<string>;
   logout: () => Promise<void>;
   restore: () => Promise<void>;
-  /** Patch the stored user (e.g. after a profile update) and persist to SecureStore */
+  /** Patch the stored user (e.g. after a profile update) and persist to storage */
   updateUser: (patch: Partial<User>) => Promise<void>;
 };
 
@@ -24,15 +24,15 @@ export const useAuthStore = create<AuthState>((set) => ({
 
   login: async (email, password) => {
     const data = await authApi.login(email, password);
-    await SecureStore.setItemAsync('token', data.token);
-    await SecureStore.setItemAsync('user', JSON.stringify(data.user));
+    await storage.setItemAsync('token', data.token);
+    await storage.setItemAsync('user', JSON.stringify(data.user));
     set({ token: data.token, user: data.user, role: data.user.role });
   },
 
   register: async (name, email, password, role) => {
     const data = await authApi.register(name, email, password, role);
-    await SecureStore.setItemAsync('token', data.token);
-    await SecureStore.setItemAsync('user', JSON.stringify(data.user));
+    await storage.setItemAsync('token', data.token);
+    await storage.setItemAsync('user', JSON.stringify(data.user));
     set({ token: data.token, user: data.user, role: data.user.role });
   },
 
@@ -42,15 +42,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
-    await SecureStore.deleteItemAsync('token');
-    await SecureStore.deleteItemAsync('user');
+    await storage.deleteItemAsync('token');
+    await storage.deleteItemAsync('user');
     set({ token: null, user: null, role: null });
   },
 
   restore: async () => {
     try {
-      const token = await SecureStore.getItemAsync('token');
-      const userStr = await SecureStore.getItemAsync('user');
+      const token = await storage.getItemAsync('token');
+      const userStr = await storage.getItemAsync('user');
       const user: User | null = userStr ? (JSON.parse(userStr) as User) : null;
       set({
         token,
@@ -64,11 +64,10 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   updateUser: async (patch) => {
-    // Merge patch into current user, update state and SecureStore
     const current = useAuthStore.getState().user;
     if (!current) return;
     const updated: User = { ...current, ...patch };
-    await SecureStore.setItemAsync('user', JSON.stringify(updated));
+    await storage.setItemAsync('user', JSON.stringify(updated));
     set({ user: updated });
   },
 }));

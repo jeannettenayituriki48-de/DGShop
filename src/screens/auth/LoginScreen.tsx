@@ -38,11 +38,16 @@ export default function LoginScreen() {
       setApiError('');
       await login(data.email, data.password);
     } catch (err: unknown) {
+      console.error('[LoginScreen] Login error:', err);
       const error = err as { message?: string; response?: { data?: { message?: string } } };
       if (error.message === 'NO_INTERNET') {
         setApiError('No internet connection. Please check your network.');
+      } else if (error.response?.data?.message) {
+        setApiError(error.response.data.message);
+      } else if (error.message) {
+        setApiError(error.message);
       } else {
-        setApiError(error.response?.data?.message || 'Login failed. Please check your credentials.');
+        setApiError('Login failed. Please check your credentials.');
       }
     }
   };
