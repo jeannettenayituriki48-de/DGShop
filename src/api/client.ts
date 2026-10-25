@@ -15,14 +15,24 @@ import { storage } from '../utils/storage';
 export function getBaseApiUrl(): string {
   const envUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
 
-  // 1. If explicitly configured with a remote cloud URL (e.g. Render https://...)
-  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
-    return envUrl.replace(/\/+$/, '') + '/api';
+  // 1. On Web:
+  // If explicitly configured with a remote production HTTPS URL (e.g. Render https://...)
+  if (Platform.OS === 'web') {
+    if (envUrl && envUrl.startsWith('https://')) {
+      return envUrl.replace(/\/+$/, '') + '/api';
+    }
+    // In local development on Web, ALWAYS match the browser window's origin:
+    // If you visit http://localhost:8081, API is http://localhost:8081/api
+    // If you visit http://192.168.10.181:8081, API is http://192.168.10.181:8081/api
+    // This eliminates any cross-origin issues or firewall blocks between localhost and LAN IP.
+    if (typeof window !== 'undefined' && window.location?.origin) {
+      return `${window.location.origin}/api`;
+    }
   }
 
-  // 2. On Web: use the current page's origin (so http://localhost:8081 or http://localhost:8082 matches)
-  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.origin) {
-    return `${window.location.origin}/api`;
+  // 2. If configured with a production HTTPS cloud URL (Render):
+  if (envUrl && envUrl.startsWith('https://')) {
+    return envUrl.replace(/\/+$/, '') + '/api';
   }
 
   // 3. On Mobile (iOS / Android) in Expo Go:

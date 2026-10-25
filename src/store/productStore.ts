@@ -63,13 +63,14 @@ export const useProductStore = create<ProductState>((set, get) => ({
       });
       set({ products: data, loading: false });
     } catch (err: unknown) {
+      console.error('[productStore] fetchProducts error:', err);
       const error = err as { message?: string; response?: { data?: { message?: string } } };
       set({
         loading: false,
         error:
           error.message === 'NO_INTERNET'
             ? 'NO_INTERNET'
-            : error.response?.data?.message || 'Failed to load products',
+            : error.response?.data?.message || error.message || 'Failed to load products',
       });
     }
   },
