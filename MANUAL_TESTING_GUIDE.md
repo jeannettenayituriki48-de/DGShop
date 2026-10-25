@@ -13,10 +13,10 @@ Use these pre-seeded accounts to execute manual tests:
 
 | Role | Name | Email | Password | Primary Purpose |
 |---|---|---|---|---|
-| **Seller** | Sam Rwema | `seller@dgshop.rw` | `Seller1234!` | Store management, product catalog, orders & reports |
-| **Seller** | Diane Umutoni | `diane@dgshop.rw` | `Seller1234!` | Multi-seller verification |
-| **Customer** | Alice Uwase | `alice@example.rw` | `Customer123!` | Primary customer purchasing, orders, cart & profile |
-| **Customer** | Jean Claude | `jean@example.rw` | `Customer123!` | Secondary customer, order tracking |
+| **Seller** | Diane Uwase | `diane.seller@dgshop.rw` | `DGShop2024!` | Store management, product catalog, orders & reports |
+| **Seller** | Gerard Habimana | `gerard.seller@dgshop.rw` | `DGShop2024!` | Multi-seller verification |
+| **Customer** | Alice Mukamana | `alice@example.rw` | `DGShop2024!` | Primary customer purchasing, orders, cart & profile |
+| **Customer** | Bob Nshimiyimana | `bob@example.rw` | `DGShop2024!` | Secondary customer, order tracking |
 
 ---
 
