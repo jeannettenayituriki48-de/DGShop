@@ -66,6 +66,7 @@
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage --forceExit",
     "build": "expo export",
+    "serve": "expo serve",
     "start": "expo start",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
