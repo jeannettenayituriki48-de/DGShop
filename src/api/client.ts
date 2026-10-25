@@ -13,6 +13,12 @@ import { storage } from '../utils/storage';
  */
 export function getBaseApiUrl(): string {
   const envUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
+  if (envUrl && !envUrl.includes('localhost') && !envUrl.includes('127.0.0.1')) {
+    return envUrl.replace(/\/+$/, '') + '/api';
+  }
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location?.origin) {
+    return `${window.location.origin}/api`;
+  }
   if (envUrl) {
     return envUrl.replace(/\/+$/, '') + '/api';
   }
@@ -27,7 +33,7 @@ export const BASE_URL = getBaseApiUrl();
 // eslint-disable-next-line import/no-named-as-default-member
 export const api = axios.create({
   baseURL: BASE_URL,
-  timeout: 15000,
+  timeout: 30000,
 });
 
 api.interceptors.request.use(async (config) => {
