@@ -38,6 +38,12 @@ export default function LoginScreen() {
     try {
       setApiError('');
       await login(data.email, data.password);
+      const currentRole = useAuthStore.getState().role;
+      if (currentRole === 'seller') {
+        router.replace('/(seller)' as unknown as Href);
+      } else {
+        router.replace('/(customer)' as unknown as Href);
+      }
     } catch (err: unknown) {
       console.error('[LoginScreen] Login error:', err);
       const error = err as { message?: string; response?: { data?: { message?: string } } };

@@ -88,19 +88,45 @@ export async function POST(request: Request): Promise<Response> {
       address = 'Rwamagana Town',
       phone = '',
       paymentMethod = 'Cash on Delivery',
+      items: directItems,
     } = (await request.json().catch(() => ({}))) as {
       address?: string;
       phone?: string;
       paymentMethod?: string;
+      items?: { product_id: number; quantity: number }[];
     };
 
-    // Fetch cart items
-    const cartItems = (await sql`
+    // 1. Fetch cart items from database
+    let cartItems = (await sql`
       SELECT ci.product_id, ci.quantity, p.price, p.stock
       FROM cart_items ci
       JOIN products p ON p.id = ci.product_id
       WHERE ci.user_id = ${userId}
     `) as { product_id: number; quantity: number; price: string; stock: number }[];
+
+    // 2. If DB cart is empty, fallback to items passed directly from client
+    if (cartItems.length === 0 && Array.isArray(directItems) && directItems.length > 0) {
+      const pIds = directItems.map((i) => Number(i.product_id)).filter((id) => !isNaN(id) && id > 0);
+      if (pIds.length > 0) {
+        const dbProducts = await sql`
+          SELECT id, price, stock
+          FROM products
+          WHERE id = ANY(${pIds})
+        `;
+        const prodMap = new Map(dbProducts.map((p) => [p.id, p]));
+        cartItems = directItems
+          .filter((i) => prodMap.has(Number(i.product_id)))
+          .map((i) => {
+            const p = prodMap.get(Number(i.product_id));
+            return {
+              product_id: Number(i.product_id),
+              quantity: Math.max(1, Number(i.quantity) || 1),
+              price: String(p?.price ?? '0'),
+              stock: Number(p?.stock ?? 0),
+            };
+          });
+      }
+    }
 
     if (cartItems.length === 0) {
       return jsonResponse({ message: 'Cart is empty' }, { status: 400 });

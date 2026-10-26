@@ -70,7 +70,7 @@ export default function CustomerOrdersScreen() {
         activeOpacity={0.8}
         onPress={() => {
           router.push({
-            pathname: '/orders/[id]',
+            pathname: '/(customer)/orders/[id]',
             params: { id: String(item.id) },
           } as unknown as Href);
         }}
@@ -192,7 +192,7 @@ export default function CustomerOrdersScreen() {
               </Text>
               <TouchableOpacity
                 style={styles.shopButton}
-                onPress={() => router.push('/' as Href)}
+                onPress={() => router.push('/(customer)' as unknown as Href)}
               >
                 <Text style={styles.shopButtonText}>
                   {t('orders.startShopping')}

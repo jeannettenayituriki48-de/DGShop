@@ -14,6 +14,7 @@ import { LoadingView } from '../../components/LoadingView';
 import { ProductCard } from '../../components/ProductCard';
 import { SearchBar } from '../../components/SearchBar';
 import { CATEGORIES, CategoryType, useProductStore } from '../../store/productStore';
+import { useCartStore } from '../../store/cartStore';
 
 const PRICE_TIERS = [
   { label: 'All Prices', max: null },
@@ -38,7 +39,20 @@ export default function CustomerCatalogScreen() {
     clearFilters,
   } = useProductStore();
 
+  const addToCart = useCartStore((s) => s.addToCart);
+  const [addingId, setAddingId] = useState<number | null>(null);
   const [localSearch, setLocalSearch] = useState(searchQuery);
+
+  const handleQuickAdd = async (productId: number) => {
+    try {
+      setAddingId(productId);
+      await addToCart(productId, 1);
+    } catch (err) {
+      console.error('[Catalog] Quick add error:', err);
+    } finally {
+      setAddingId(null);
+    }
+  };
 
   useEffect(() => {
     fetchProducts();
@@ -161,7 +175,14 @@ export default function CustomerCatalogScreen() {
           renderItem={({ item }) => (
             <ProductCard
               product={item}
-              onPress={() => router.push(`/product/${item.id}` as Href)}
+              onPress={() => {
+                router.push({
+                  pathname: '/(customer)/product/[id]',
+                  params: { id: String(item.id) },
+                } as unknown as Href);
+              }}
+              onAddToCart={() => handleQuickAdd(item.id)}
+              isAddingToCart={addingId === item.id}
             />
           )}
           ListEmptyComponent={

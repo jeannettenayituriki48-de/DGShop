@@ -64,7 +64,7 @@ export default function CustomerCartScreen() {
           <Text style={styles.emptySubtitle}>{t('cart.emptySubtitle')}</Text>
           <Pressable
             style={styles.shopBtn}
-            onPress={() => router.push('/' as Href)}
+            onPress={() => router.push('/(customer)' as unknown as Href)}
           >
             <Text style={styles.shopBtnText}>{t('cart.startShopping')}</Text>
           </Pressable>
@@ -168,7 +168,7 @@ export default function CustomerCartScreen() {
 
             <Pressable
               style={styles.checkoutBtn}
-              onPress={() => router.push('/checkout' as Href)}
+              onPress={() => router.push('/(customer)/checkout' as unknown as Href)}
             >
               <Text style={styles.checkoutBtnText}>
                 {t('cart.checkout')} →

@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { useLocalSearchParams } from 'expo-router';
+import { Href, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -57,10 +57,18 @@ export default function ProductDetailScreen() {
       Alert.alert(
         t('product.addToCart'),
         `${quantity}x ${selectedProduct.name} - ${t('product.addedToCart')}`,
-        [{ text: 'OK' }]
+        [
+          {
+            text: t('cart.title'),
+            onPress: () => router.push('/(customer)/cart' as unknown as Href),
+          },
+          { text: 'OK' },
+        ]
       );
-    } catch {
-      Alert.alert(t('common.error'), 'Failed to add item to cart. Please try again.');
+    } catch (err: unknown) {
+      console.error('[ProductDetail] Add to cart error:', err);
+      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      Alert.alert(t('common.error'), msg || 'Failed to add item to cart. Please try again.');
     } finally {
       setAdding(false);
     }

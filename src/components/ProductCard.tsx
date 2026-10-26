@@ -6,6 +6,8 @@ import { Product } from '../api/products.api';
 interface ProductCardProps {
   product: Product;
   onPress: () => void;
+  onAddToCart?: () => void;
+  isAddingToCart?: boolean;
 }
 
 const CATEGORY_ICONS: Record<string, string> = {
@@ -17,7 +19,12 @@ const CATEGORY_ICONS: Record<string, string> = {
   Cosmetics: '✨',
 };
 
-export function ProductCard({ product, onPress }: ProductCardProps) {
+export function ProductCard({
+  product,
+  onPress,
+  onAddToCart,
+  isAddingToCart = false,
+}: ProductCardProps) {
   const { t } = useTranslation();
   const icon = CATEGORY_ICONS[product.category] || '🛍️';
 
@@ -51,9 +58,26 @@ export function ProductCard({ product, onPress }: ProductCardProps) {
           {product.name}
         </Text>
 
-        <Text style={styles.price}>
-          {formattedPrice} {t('common.currency')}
-        </Text>
+        <View style={styles.priceAndActionRow}>
+          <Text style={styles.price}>
+            {formattedPrice} {t('common.currency')}
+          </Text>
+
+          {onAddToCart && product.stock > 0 && (
+            <Pressable
+              style={[styles.quickAddBtn, isAddingToCart && styles.quickAddBtnDisabled]}
+              disabled={isAddingToCart}
+              onPress={(e) => {
+                e.stopPropagation?.();
+                onAddToCart();
+              }}
+            >
+              <Text style={styles.quickAddText}>
+                {isAddingToCart ? '...' : '+ 🛒'}
+              </Text>
+            </Pressable>
+          )}
+        </View>
 
         <View style={styles.stockRow}>
           <View
@@ -131,11 +155,34 @@ const styles = StyleSheet.create({
     height: 36,
     lineHeight: 18,
   },
+  priceAndActionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 6,
+  },
   price: {
-    fontSize: 15,
+    fontSize: 14,
     fontWeight: '700',
     color: '#0066cc',
-    marginTop: 4,
+    flex: 1,
+  },
+  quickAddBtn: {
+    backgroundColor: '#0066cc',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  quickAddBtnDisabled: {
+    backgroundColor: '#94a3b8',
+    opacity: 0.6,
+  },
+  quickAddText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
   },
   stockRow: {
     flexDirection: 'row',

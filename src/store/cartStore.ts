@@ -50,13 +50,14 @@ export const useCartStore = create<CartState>()(
           const items = await cartApi.getCart();
           set({ items, loading: false });
         } catch (err: unknown) {
+          console.error('[cartStore] addToCart error:', err);
           const error = err as { message?: string; response?: { data?: { message?: string } } };
           set({
             loading: false,
             error:
               error.message === 'NO_INTERNET'
                 ? 'NO_INTERNET'
-                : error.response?.data?.message || 'Failed to add item to cart',
+                : error.response?.data?.message || error.message || 'Failed to add item to cart',
           });
           throw err;
         }

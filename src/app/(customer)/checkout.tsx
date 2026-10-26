@@ -15,6 +15,7 @@ import {
 import { z } from 'zod';
 import { ordersApi } from '../../api/orders.api';
 import { useCartStore } from '../../store/cartStore';
+import { useOrderStore } from '../../store/orderStore';
 
 const PAYMENT_METHODS = [
   { id: 'MTN Mobile Money', labelKey: 'checkout.momoMTN', icon: '📱', color: '#f59e0b' },
@@ -25,11 +26,14 @@ const PAYMENT_METHODS = [
 const checkoutSchema = z.object({
   address: z
     .string()
-    .min(5, 'Please provide a detailed delivery address in Rwamagana (Sector, Street/Landmark)'),
+    .min(3, 'Please provide a delivery address in Rwamagana (Sector, Street/Landmark)'),
   phone: z
     .string()
-    .regex(
-      /^(?:\+?250|0)?7[2389]\d{7}$/,
+    .refine(
+      (val) => {
+        const cleaned = val.replace(/[\s-]/g, '');
+        return /^(?:\+?250|0)?7[2389]\d{7}$/.test(cleaned);
+      },
       'Enter a valid Rwandan mobile number (e.g. 0788123456 or 0728123456)'
     ),
   paymentMethod: z.string().min(1, 'Please select a payment method'),
@@ -79,15 +83,23 @@ export default function CheckoutScreen() {
       setIsSubmitting(true);
       setErrorMessage('');
 
+      const cleanPhone = data.phone.replace(/[\s-]/g, '').trim();
+
       const result = await ordersApi.createOrder({
         address: data.address.trim(),
-        phone: data.phone.trim(),
+        phone: cleanPhone,
         paymentMethod: selectedPayment,
+        items: items.map((i) => ({
+          product_id: i.product_id,
+          quantity: i.quantity,
+        })),
       });
 
       await clearCart();
-      setOrderSuccess({ id: result.orderId, phone: data.phone.trim() });
+      await useOrderStore.getState().fetchOrders();
+      setOrderSuccess({ id: result.orderId, phone: cleanPhone });
     } catch (err: unknown) {
+      console.error('[checkout] Order error:', err);
       const error = err as { message?: string; response?: { data?: { message?: string } } };
       if (error.message === 'NO_INTERNET') {
         setErrorMessage(t('common.noInternet'));
@@ -121,14 +133,14 @@ export default function CheckoutScreen() {
 
           <Pressable
             style={styles.ordersBtn}
-            onPress={() => router.push('/orders' as Href)}
+            onPress={() => router.push('/(customer)/orders' as unknown as Href)}
           >
             <Text style={styles.ordersBtnText}>{t('checkout.viewOrders')} →</Text>
           </Pressable>
 
           <Pressable
             style={styles.continueBtn}
-            onPress={() => router.push('/' as Href)}
+            onPress={() => router.push('/(customer)' as unknown as Href)}
           >
             <Text style={styles.continueBtnText}>
               {t('checkout.continueShopping')}

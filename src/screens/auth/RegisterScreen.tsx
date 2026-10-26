@@ -54,6 +54,12 @@ export default function RegisterScreen() {
     try {
       setApiError('');
       await register(data.name, data.email, data.password, selectedRole);
+      const currentRole = useAuthStore.getState().role;
+      if (currentRole === 'seller') {
+        router.replace('/(seller)' as unknown as Href);
+      } else {
+        router.replace('/(customer)' as unknown as Href);
+      }
     } catch (err: unknown) {
       console.error('[RegisterScreen] Registration error:', err);
       const error = err as { message?: string; response?: { data?: { message?: string } } };

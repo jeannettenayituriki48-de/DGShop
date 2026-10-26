@@ -26,6 +26,7 @@ export interface CheckoutPayload {
   address: string;
   phone: string;
   paymentMethod: string;
+  items?: { product_id: number; quantity: number }[];
 }
 
 export interface CreateOrderResponse {
